@@ -2,6 +2,8 @@ package cdsf
 
 import (
 	"github.com/enbility/eebus-go/api"
+	"github.com/enbility/eebus-go/features/server"
+	"github.com/enbility/ship-go/util"
 
 	ucapi "github.com/enbility/eebus-go/usecases/api"
 	"github.com/enbility/eebus-go/usecases/usecase"
@@ -63,10 +65,12 @@ func (e *CDSF) AddFeatures() {
 	f.AddFunctionType(model.FunctionTypeHvacSystemFunctionListData, true, false)
 	f.AddFunctionType(model.FunctionTypeHvacOperationModeDescriptionListData, true, false)
 
-	/*	if hvac, err := server.NewHvac(e.LocalEntity, e.EventCB); err == nil {
+	if hvac, err := server.NewHvac(e.LocalEntity); err == nil {
 		operationModeDesc := model.HvacOperationModeDescriptionDataType{
-			OperationModeType: util.Ptr(model.HvacOperationModeTypeType),
+			OperationModeType: util.Ptr(model.HvacOperationModeTypeTypeAuto),
+			OperationModeId:   util.Ptr(model.HvacOperationModeIdType(0)),
 		}
-	}*/
+		hvac.AddOperatingModeDescription(operationModeDesc)
+	}
 
 }

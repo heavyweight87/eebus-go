@@ -11,16 +11,16 @@ type HvacCommon struct {
 	featureRemote spineapi.FeatureRemoteInterface
 }
 
-func (m *HvacCommon) GetDescriptionsForFilter(
-	filter model.MeasurementDescriptionDataType,
-) ([]model.MeasurementDescriptionDataType, error) {
+func (m *HvacCommon) GetOperatingModeDescriptionsForFilter(
+	filter model.HvacOperationModeDescriptionDataType,
+) ([]model.HvacOperationModeDescriptionDataType, error) {
 	function := model.FunctionTypeMeasurementDescriptionListData
 
-	data, err := featureDataCopyOfType[model.MeasurementDescriptionListDataType](m.featureLocal, m.featureRemote, function)
-	if err != nil || data == nil || data.MeasurementDescriptionData == nil {
+	data, err := featureDataCopyOfType[model.HvacOperationModeDescriptionListDataType](m.featureLocal, m.featureRemote, function)
+	if err != nil || data == nil || data.HvacOperationModeDescriptionData == nil {
 		return nil, api.ErrDataNotAvailable
 	}
 
-	result := searchFilterInList[model.MeasurementDescriptionDataType](data.MeasurementDescriptionData, filter)
+	result := searchFilterInList[model.HvacOperationModeDescriptionDataType](data.HvacOperationModeDescriptionData, filter)
 	return result, nil
 }
