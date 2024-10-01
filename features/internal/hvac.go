@@ -11,6 +11,18 @@ type HvacCommon struct {
 	featureRemote spineapi.FeatureRemoteInterface
 }
 
+func NewLocalHvac(featureLocal spineapi.FeatureLocalInterface) *HvacCommon {
+	return &HvacCommon{
+		featureLocal: featureLocal,
+	}
+}
+
+func NewRemoteHvac(featureRemote spineapi.FeatureRemoteInterface) *HvacCommon {
+	return &HvacCommon{
+		featureRemote: featureRemote,
+	}
+}
+
 func (m *HvacCommon) GetOperatingModeDescriptionsForFilter(
 	filter model.HvacOperationModeDescriptionDataType,
 ) ([]model.HvacOperationModeDescriptionDataType, error) {

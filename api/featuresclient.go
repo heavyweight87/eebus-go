@@ -165,3 +165,23 @@ type TimeSeriesClientInterface interface {
 	// returns an error if this failed
 	WriteData(data []model.TimeSeriesDataType) (*model.MsgCounterType, error)
 }
+
+type OperationModeClientInterface interface {
+	// request FunctionTypeLoadControlLimitDescriptionListData from a remote device
+	RequestDescriptions(
+		selector *model.HvacOperationModeDescriptionListDataSelectorsType,
+		elements *model.HvacOperationModeDescriptionDataElementsType,
+	) (*model.MsgCounterType, error)
+
+	// request FunctionTypeLoadControlLimitListData from a remote device
+	RequestData(
+		selector *model.HvacOperationModeDescriptionListDataSelectorsType,
+		elements *model.HvacOperationModeDescriptionDataElementsType,
+	) (*model.MsgCounterType, error)
+
+	// write load control limits
+	// returns an error if this failed
+	WriteLimitData(
+		data model.HvacOperationModeDescriptionDataType,
+	) (*model.MsgCounterType, error)
+}

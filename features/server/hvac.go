@@ -19,7 +19,8 @@ func NewHvac(localEntity spineapi.EntityLocalInterface) (*Hvac, error) {
 	}
 
 	lc := &Hvac{
-		Feature: feature,
+		Feature:    feature,
+		HvacCommon: internal.NewLocalHvac(feature.featureLocal),
 	}
 
 	return lc, nil
