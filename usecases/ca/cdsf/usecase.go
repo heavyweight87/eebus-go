@@ -12,14 +12,11 @@ import (
 // Configuration of Domestic Water Heater System Function
 type CDSF struct {
 	*usecase.UseCaseBase
-
-	service api.ServiceInterface
 }
 
 var _ ucapi.CaCDSFInterface = (*CDSF)(nil)
 
 func NewCDSF(
-	service api.ServiceInterface,
 	localEntity spineapi.EntityLocalInterface,
 	eventCB api.EntityEventCallback,
 ) *CDSF {
@@ -28,11 +25,23 @@ func NewCDSF(
 	}
 	validEntityTypes := []model.EntityTypeType{
 		model.EntityTypeTypeDHWCircuit,
+		model.EntityTypeTypeGeneric,
 	}
 	useCaseScenarios := []api.UseCaseScenario{
 		{
-			Scenario:  model.UseCaseScenarioSupportType(1),
-			Mandatory: true,
+			Scenario:       model.UseCaseScenarioSupportType(1),
+			Mandatory:      true,
+			ServerFeatures: []model.FeatureTypeType{model.FeatureTypeTypeHvac},
+		},
+		{
+			Scenario:       model.UseCaseScenarioSupportType(2),
+			Mandatory:      true,
+			ServerFeatures: []model.FeatureTypeType{model.FeatureTypeTypeHvac},
+		},
+		{
+			Scenario:       model.UseCaseScenarioSupportType(3),
+			Mandatory:      true,
+			ServerFeatures: []model.FeatureTypeType{model.FeatureTypeTypeHvac},
 		},
 	}
 
@@ -51,7 +60,6 @@ func NewCDSF(
 
 	uc := &CDSF{
 		UseCaseBase: usecase,
-		service:     service,
 	}
 
 	_ = spine.Events.Subscribe(uc)
@@ -65,6 +73,6 @@ func (e *CDSF) AddFeatures() {
 		model.FeatureTypeTypeHvac,
 	}
 	for _, feature := range clientFeatures {
-		e.LocalEntity.GetOrAddFeature(feature, model.RoleTypeClient)
+		_ = e.LocalEntity.GetOrAddFeature(feature, model.RoleTypeClient)
 	}
 }
