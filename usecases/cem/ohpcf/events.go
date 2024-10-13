@@ -17,13 +17,7 @@ func (e *OHPCF) HandleEvent(payload spineapi.EventPayload) {
 
 	if internal.IsEntityConnected(payload) {
 		// get the smart energy management data from the remote entity
-		smartEnergyManagement, err := client.NewSmartEnergyManagementPs(e.LocalEntity, payload.Entity)
-		if err != nil || smartEnergyManagement == nil {
-			return
-		}
-		if _, err := smartEnergyManagement.RequestData(); err != nil {
-			logging.Log().Debug(err)
-		}
+		e.connected(payload.Entity)
 		return
 	}
 
@@ -35,5 +29,15 @@ func (e *OHPCF) HandleEvent(payload spineapi.EventPayload) {
 	switch payload.Data.(type) {
 	default:
 		return
+	}
+}
+
+func (e *OHPCF) connected(entity spineapi.EntityRemoteInterface) {
+	smartEnergyManagement, err := client.NewSmartEnergyManagementPs(e.LocalEntity, entity)
+	if err != nil || smartEnergyManagement == nil {
+		return
+	}
+	if _, err := smartEnergyManagement.RequestData(); err != nil {
+		logging.Log().Debug(err)
 	}
 }
