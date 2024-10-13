@@ -1,4 +1,4 @@
-package cdsf
+package ohpcf
 
 import (
 	"github.com/enbility/eebus-go/api"
@@ -9,39 +9,35 @@ import (
 	"github.com/enbility/spine-go/spine"
 )
 
-// Configuration of Domestic Water Heater System Function
+// Optimization of Heat Pump Compressor Function
 type OHPCF struct {
 	*usecase.UseCaseBase
 }
 
 var _ ucapi.CemOHPCFInterface = (*OHPCF)(nil)
 
-func NewCDSF(
+func NewOHPCF(
 	localEntity spineapi.EntityLocalInterface,
 	eventCB api.EntityEventCallback,
 ) *OHPCF {
 	validActorTypes := []model.UseCaseActorType{
-		model.UseCaseActorTypeDHWCircuit,
+		model.UseCaseActorTypeCEM,
+		model.UseCaseActorTypeCompressor,
 	}
 	validEntityTypes := []model.EntityTypeType{
-		model.EntityTypeTypeDHWCircuit,
-		model.EntityTypeTypeGeneric,
+		model.EntityTypeTypeCompressor,
+		model.EntityTypeTypeCEM,
 	}
 	useCaseScenarios := []api.UseCaseScenario{
 		{
 			Scenario:       model.UseCaseScenarioSupportType(1),
 			Mandatory:      true,
-			ServerFeatures: []model.FeatureTypeType{model.FeatureTypeTypeHvac},
+			ServerFeatures: []model.FeatureTypeType{model.FeatureTypeTypeSmartEnergyManagementPs},
 		},
 		{
 			Scenario:       model.UseCaseScenarioSupportType(2),
 			Mandatory:      true,
-			ServerFeatures: []model.FeatureTypeType{model.FeatureTypeTypeHvac},
-		},
-		{
-			Scenario:       model.UseCaseScenarioSupportType(3),
-			Mandatory:      true,
-			ServerFeatures: []model.FeatureTypeType{model.FeatureTypeTypeHvac},
+			ServerFeatures: []model.FeatureTypeType{model.FeatureTypeTypeSmartEnergyManagementPs},
 		},
 	}
 
@@ -70,7 +66,7 @@ func NewCDSF(
 func (e *OHPCF) AddFeatures() {
 	// client features
 	var clientFeatures = []model.FeatureTypeType{
-		model.FeatureTypeTypeHvac,
+		model.FeatureTypeTypeSmartEnergyManagementPs,
 	}
 	for _, feature := range clientFeatures {
 		_ = e.LocalEntity.GetOrAddFeature(feature, model.RoleTypeClient)

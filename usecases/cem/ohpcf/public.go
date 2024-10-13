@@ -1,9 +1,8 @@
-package cdsf
+package ohpcf
 
 import (
 	"github.com/enbility/eebus-go/api"
 	"github.com/enbility/eebus-go/features/client"
-	"github.com/enbility/ship-go/util"
 	spineapi "github.com/enbility/spine-go/api"
 	"github.com/enbility/spine-go/model"
 )
@@ -21,8 +20,8 @@ import (
 // possible errors:
 //   - ErrDataNotAvailable if no such limit is (yet) available
 //   - and others
-func (e *OHPCF) OperationMode(entity spineapi.EntityRemoteInterface) (
-	mode model.HvacOperationModeTypeType, resultErr error) {
+func (e *OHPCF) SmartEnergyManagementData(entity spineapi.EntityRemoteInterface) (
+	mode *model.SmartEnergyManagementPsDataType, resultErr error) {
 
 	resultErr = api.ErrNoCompatibleEntity
 	if !e.IsCompatibleEntityType(entity) {
@@ -30,20 +29,17 @@ func (e *OHPCF) OperationMode(entity spineapi.EntityRemoteInterface) (
 	}
 
 	resultErr = api.ErrDataNotAvailable
-	hvac, err := client.NewHvac(e.LocalEntity, entity)
-	if err != nil || hvac == nil {
+	smartEnergyManagement, err := client.NewSmartEnergyManagementPs(e.LocalEntity, entity)
+	if err != nil || smartEnergyManagement == nil {
 		return
 	}
 
-	filter := model.HvacOperationModeDescriptionDataType{
-		OperationModeType: util.Ptr(model.HvacOperationModeTypeTypeOff),
-	}
-	limitDescriptions, err := hvac.GetOperatingModeDescriptionsForFilter(filter)
-	if err != nil || len(limitDescriptions) != 1 {
+	smartEnergyManagementData, err := smartEnergyManagement.GetData()
+	if err != nil {
 		return
 	}
 
 	resultErr = nil
 
-	return
+	return smartEnergyManagementData, resultErr
 }

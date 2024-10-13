@@ -1,4 +1,4 @@
-package cdsf
+package ohpcf
 
 import "github.com/enbility/eebus-go/api"
 
