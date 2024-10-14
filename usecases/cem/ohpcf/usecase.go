@@ -25,8 +25,8 @@ func NewOHPCF(
 		model.UseCaseActorTypeCompressor,
 	}
 	validEntityTypes := []model.EntityTypeType{
-		model.EntityTypeTypeCompressor,
 		model.EntityTypeTypeCEM,
+		model.EntityTypeTypeCompressor,
 	}
 	useCaseScenarios := []api.UseCaseScenario{
 		{
@@ -45,7 +45,7 @@ func NewOHPCF(
 		localEntity,
 		model.UseCaseActorTypeCEM,
 		model.UseCaseNameTypeOptimizationOfSelfConsumptionByHeatPumpCompressorFlexibility,
-		"1.0.1",
+		"1.0.0",
 		"release",
 		useCaseScenarios,
 		eventCB,
