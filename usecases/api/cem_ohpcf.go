@@ -10,5 +10,5 @@ type CemOHPCFInterface interface {
 	api.UseCaseInterface
 
 	SmartEnergyManagementData(entity spineapi.EntityRemoteInterface) (
-		mode *model.SmartEnergyManagementPsDataType, resultErr error)
+		smartEnergyManagementData model.SmartEnergyManagementPsDataType, resultErr error)
 }

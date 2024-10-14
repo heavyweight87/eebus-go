@@ -5,6 +5,7 @@ import (
 	"github.com/enbility/eebus-go/features/client"
 	spineapi "github.com/enbility/spine-go/api"
 	"github.com/enbility/spine-go/model"
+	"github.com/enbility/spine-go/util"
 )
 
 // Scenario 1 - Monitor heat pump compressor's power consumption flexibility
@@ -21,8 +22,17 @@ import (
 //   - ErrDataNotAvailable if no such limit is (yet) available
 //   - and others
 func (e *OHPCF) SmartEnergyManagementData(entity spineapi.EntityRemoteInterface) (
-	mode *model.SmartEnergyManagementPsDataType, resultErr error) {
+	smartEnergyManagementData model.SmartEnergyManagementPsDataType, resultErr error) {
 
+	smartEnergyManagementData = model.SmartEnergyManagementPsDataType{
+		NodeScheduleInformation: &model.PowerSequenceNodeScheduleInformationDataType{
+			NodeRemoteControllable:           util.Ptr(false),
+			SupportsSingleSlotSchedulingOnly: util.Ptr(false),
+			AlternativesCount:                util.Ptr(uint(0)),
+			TotalSequencesCountMax:           util.Ptr(uint(0)),
+			SupportsReselection:              util.Ptr(false),
+		},
+	}
 	resultErr = api.ErrNoCompatibleEntity
 	if !e.IsCompatibleEntityType(entity) {
 		return
@@ -34,11 +44,11 @@ func (e *OHPCF) SmartEnergyManagementData(entity spineapi.EntityRemoteInterface)
 		return
 	}
 
-	smartEnergyManagementData, err := smartEnergyManagement.GetData()
-	if err != nil {
+	smartEnergyManagementDataPtr, err := smartEnergyManagement.GetData()
+	if err != nil || smartEnergyManagementDataPtr == nil {
 		return
 	}
-
+	smartEnergyManagementData = *smartEnergyManagementDataPtr
 	resultErr = nil
 
 	return smartEnergyManagementData, resultErr

@@ -9,21 +9,21 @@ import (
 func (s *CemOHPCFSuite) Test_NodeScheduleInformation() {
 	data, err := s.sut.SmartEnergyManagementData(nil)
 	assert.NotNil(s.T(), err)
-	assert.Equal(s.T(), 0, data.NodeScheduleInformation.AlternativesCount)
-	assert.Equal(s.T(), false, data.NodeScheduleInformation.NodeRemoteControllable)
-	assert.Equal(s.T(), false, data.NodeScheduleInformation.SupportsReselection)
-	assert.Equal(s.T(), false, data.NodeScheduleInformation.SupportsSingleSlotSchedulingOnly)
-	assert.Equal(s.T(), 0, data.NodeScheduleInformation.TotalSequencesCountMax)
+	assert.Equal(s.T(), uint(0), *data.NodeScheduleInformation.AlternativesCount)
+	assert.Equal(s.T(), false, *data.NodeScheduleInformation.NodeRemoteControllable)
+	assert.Equal(s.T(), false, *data.NodeScheduleInformation.SupportsReselection)
+	assert.Equal(s.T(), false, *data.NodeScheduleInformation.SupportsSingleSlotSchedulingOnly)
+	assert.Equal(s.T(), uint(0), *data.NodeScheduleInformation.TotalSequencesCountMax)
 
 	data, err = s.sut.SmartEnergyManagementData(s.monitoredEntity)
 	assert.NotNil(s.T(), err)
-	assert.Equal(s.T(), 0, data.NodeScheduleInformation.AlternativesCount)
-	assert.Equal(s.T(), false, data.NodeScheduleInformation.NodeRemoteControllable)
-	assert.Equal(s.T(), false, data.NodeScheduleInformation.SupportsReselection)
-	assert.Equal(s.T(), false, data.NodeScheduleInformation.SupportsSingleSlotSchedulingOnly)
-	assert.Equal(s.T(), 0, data.NodeScheduleInformation.TotalSequencesCountMax)
+	assert.Equal(s.T(), uint(0), *data.NodeScheduleInformation.AlternativesCount)
+	assert.Equal(s.T(), false, *data.NodeScheduleInformation.NodeRemoteControllable)
+	assert.Equal(s.T(), false, *data.NodeScheduleInformation.SupportsReselection)
+	assert.Equal(s.T(), false, *data.NodeScheduleInformation.SupportsSingleSlotSchedulingOnly)
+	assert.Equal(s.T(), uint(0), *data.NodeScheduleInformation.TotalSequencesCountMax)
 
-	limitData := &model.SmartEnergyManagementPsDataType{
+	smartEnergyManagementData := &model.SmartEnergyManagementPsDataType{
 		NodeScheduleInformation: &model.PowerSequenceNodeScheduleInformationDataType{
 
 			NodeRemoteControllable:           util.Ptr(true),
@@ -35,14 +35,14 @@ func (s *CemOHPCFSuite) Test_NodeScheduleInformation() {
 	}
 
 	rFeature := s.remoteDevice.FeatureByEntityTypeAndRole(s.monitoredEntity, model.FeatureTypeTypeSmartEnergyManagementPs, model.RoleTypeServer)
-	_, fErr := rFeature.UpdateData(true, model.FunctionTypeLoadControlLimitListData, limitData, nil, nil)
+	_, fErr := rFeature.UpdateData(true, model.FunctionTypeSmartEnergyManagementPsData, smartEnergyManagementData, nil, nil)
 	assert.Nil(s.T(), fErr)
 
 	data, err = s.sut.SmartEnergyManagementData(s.monitoredEntity)
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), 1, data.NodeScheduleInformation.AlternativesCount)
-	assert.Equal(s.T(), true, data.NodeScheduleInformation.NodeRemoteControllable)
-	assert.Equal(s.T(), false, data.NodeScheduleInformation.SupportsReselection)
-	assert.Equal(s.T(), true, data.NodeScheduleInformation.SupportsSingleSlotSchedulingOnly)
-	assert.Equal(s.T(), 3, data.NodeScheduleInformation.TotalSequencesCountMax)
+	assert.Equal(s.T(), uint(1), *data.NodeScheduleInformation.AlternativesCount)
+	assert.Equal(s.T(), true, *data.NodeScheduleInformation.NodeRemoteControllable)
+	assert.Equal(s.T(), false, *data.NodeScheduleInformation.SupportsReselection)
+	assert.Equal(s.T(), true, *data.NodeScheduleInformation.SupportsSingleSlotSchedulingOnly)
+	assert.Equal(s.T(), uint(3), *data.NodeScheduleInformation.TotalSequencesCountMax)
 }
