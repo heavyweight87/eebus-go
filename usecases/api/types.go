@@ -150,3 +150,20 @@ type DurationSlotValue struct {
 	Duration time.Duration // Duration of this slot
 	Value    float64       // Energy Cost or Power Limit
 }
+
+// Contains details about the setpoint
+type Setpoint struct {
+}
+
+// Contains details about the setpoint constraints.
+// Constraints that shall be held when trying to change a setpoint.
+type SetpointConstraints struct {
+	// The minimum value, the setpoint can be set to.
+	Min float64
+
+	// The maximum value, the setpoint can be set to.
+	Max float64
+
+	// Optional, the minimum step size between two different values.
+	SetSize float64
+}
