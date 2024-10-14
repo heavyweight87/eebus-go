@@ -242,3 +242,9 @@ type TimeSeriesCommonInterface interface {
 	// return current data for Time Series for a given filter
 	GetDataForFilter(filter model.TimeSeriesDescriptionDataType) ([]model.TimeSeriesDataType, error)
 }
+
+// Common interface for HvacClientInterface and HvacServerInterface
+type SetPointCommonInterface interface{}
+
+// Common interface for HvacClientInterface and HvacServerInterface
+type HvacCommonInterface interface{}
