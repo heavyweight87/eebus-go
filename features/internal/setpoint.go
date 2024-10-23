@@ -28,6 +28,18 @@ func NewRemoteSetPoint(featureRemote spineapi.FeatureRemoteInterface) *SetPointC
 
 var _ api.SetPointCommonInterface = (*SetPointCommon)(nil)
 
+// GetSetpointDescriptions returns the setpoint descriptions
+func (s *SetPointCommon) GetSetpointDescriptions() ([]model.SetpointDescriptionDataType, error) {
+	function := model.FunctionTypeSetpointDescriptionListData
+
+	data, err := featureDataCopyOfType[model.SetpointDescriptionListDataType](s.featureLocal, s.featureRemote, function)
+	if err != nil || data == nil || data.SetpointDescriptionData == nil {
+		return nil, api.ErrDataNotAvailable
+	}
+
+	return data.SetpointDescriptionData, nil
+}
+
 // GetSetpointForId returns the setpoint data for a given setpoint ID
 func (s *SetPointCommon) GetSetpointForId(
 	id model.SetpointIdType,

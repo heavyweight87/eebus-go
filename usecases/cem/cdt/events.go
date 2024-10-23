@@ -4,6 +4,7 @@ import (
 	"github.com/enbility/eebus-go/features/client"
 	"github.com/enbility/eebus-go/usecases/internal"
 	"github.com/enbility/ship-go/logging"
+	"github.com/enbility/ship-go/util"
 	spineapi "github.com/enbility/spine-go/api"
 	"github.com/enbility/spine-go/model"
 )
@@ -26,7 +27,7 @@ func (e *CDT) HandleEvent(payload spineapi.EventPayload) {
 
 	switch payload.Data.(type) {
 	case *model.SetpointDescriptionListDataType:
-		logging.Log().Debug("SetpointDescriptionListDataType")
+		e.setpointDescriptionsUpdate(payload.Entity)
 
 	case *model.SetpointConstraintsListDataType:
 		e.EventCB(payload.Ski, payload.Device, payload.Entity, DataUpdateSetpointConstraints)
@@ -91,15 +92,43 @@ func (e *CDT) resolveOpModeToSetpointMapping(payload spineapi.EventPayload) {
 	// Now that we have resolved the mapping between operation modes and setpoints,
 	// we can request the setpoint descriptions, setpoints, and setpoint constraints
 	if setPoint, err := client.NewSetPoint(e.LocalEntity, payload.Entity); err == nil {
-		if _, err := setPoint.RequestSetPointDescriptions(nil, nil); err != nil {
+		selector := &model.SetpointDescriptionListDataSelectorsType{
+			ScopeType: util.Ptr(model.ScopeTypeTypeDhwTemperature),
+		}
+		if _, err := setPoint.RequestSetPointDescriptions(selector, nil); err != nil {
+			logging.Log().Debug(err)
+		}
+	}
+}
+
+// setpointDescriptionsUpdate processes the necessary steps when setpoint descriptions are updated.
+func (e *CDT) setpointDescriptionsUpdate(entity spineapi.EntityRemoteInterface) {
+	setPoint, err := client.NewSetPoint(e.LocalEntity, entity)
+	if err != nil {
+		logging.Log().Debug(err)
+		return
+	}
+
+	setpointDescriptions, err := setPoint.GetSetpointDescriptions()
+	if err != nil {
+		logging.Log().Debug(err)
+		return
+	}
+
+	// The setpointConstraintsListData and setpointListData reads should
+	// be partial, using setpointId from setpointDescriptionListData.
+	for _, setpointDescription := range setpointDescriptions {
+		constraintsSelector := &model.SetpointConstraintsListDataSelectorsType{
+			SetpointId: setpointDescription.SetpointId,
+		}
+		if _, err := setPoint.RequestSetPointConstraints(constraintsSelector, nil); err != nil {
 			logging.Log().Debug(err)
 		}
 
-		if _, err := setPoint.RequestSetPoints(nil, nil); err != nil {
-			logging.Log().Debug(err)
+		setpointSelector := &model.SetpointListDataSelectorsType{
+			SetpointId: setpointDescription.SetpointId,
 		}
-
-		if _, err := setPoint.RequestSetPointConstraints(nil, nil); err != nil {
+		if _, err := setPoint.RequestSetPoints(setpointSelector, nil); err != nil {
 			logging.Log().Debug(err)
 		}
 	}
