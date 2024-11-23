@@ -7,4 +7,11 @@ const (
 	//
 	// Use `RemoteEntities` to get the current data
 	UseCaseSupportUpdate api.EventType = "cem-ohpcf-UseCaseSupportUpdate"
+
+	// Optional heat pump commpressor's consumption data was updated
+	//
+	// Use `SmartEnergyManagementData` to get the current data
+	//
+	// Use Case OHPCF, Scenario 1
+	DataUpdateSmartEnergyManagementData api.EventType = "cem-ohpcf-DataUpdateSmartEnergyManagementData"
 )
