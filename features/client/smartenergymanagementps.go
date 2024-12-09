@@ -48,7 +48,6 @@ func (l *SmartEnergyManagementPs) WriteData(data *model.SmartEnergyManagementPsD
 
 	cmd := model.CmdType{
 		Function:                    util.Ptr(model.FunctionTypeSmartEnergyManagementPsData),
-		Filter:                      []model.FilterType{*model.NewFilterTypePartial()},
 		SmartEnergyManagementPsData: data,
 	}
 

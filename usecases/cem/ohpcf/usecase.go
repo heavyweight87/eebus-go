@@ -12,6 +12,8 @@ import (
 // Optimization of Heat Pump Compressor Function
 type OHPCF struct {
 	*usecase.UseCaseBase
+
+	optionalPowerConsumptionState *model.PowerSequenceStateType
 }
 
 var _ ucapi.CemOHPCFInterface = (*OHPCF)(nil)

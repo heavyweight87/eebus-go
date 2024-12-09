@@ -1,8 +1,12 @@
 package ohpcf
 
 import (
+	"time"
+
 	"github.com/enbility/eebus-go/api"
 	"github.com/enbility/eebus-go/features/client"
+	ucapi "github.com/enbility/eebus-go/usecases/api"
+	"github.com/enbility/ship-go/logging"
 	spineapi "github.com/enbility/spine-go/api"
 	"github.com/enbility/spine-go/model"
 	"github.com/enbility/spine-go/util"
@@ -10,60 +14,35 @@ import (
 
 // Scenario 1 - Monitor heat pump compressor's power consumption flexibility
 
-// Read the current Smart Energy Management Data
-//
-// parameters:
-//   - entity: the entity of the e.g. HVAC
-//
-// return values:
-//   - limit: load limit data
-//
-// possible errors:
-//   - ErrDataNotAvailable if no such limit is (yet) available
-//   - and others
-func (e *OHPCF) SmartEnergyManagementData(entity spineapi.EntityRemoteInterface) (
-	smartEnergyManagementData model.SmartEnergyManagementPsDataType, resultErr error) {
+func getPowerValues(data *model.SmartEnergyManagementPsDataType) (float64, float64, error) {
+	power := float64(0)
+	maxPower := float64(0)
 
-	smartEnergyManagementData = model.SmartEnergyManagementPsDataType{
-		NodeScheduleInformation: &model.PowerSequenceNodeScheduleInformationDataType{
-			NodeRemoteControllable:           util.Ptr(false),
-			SupportsSingleSlotSchedulingOnly: util.Ptr(false),
-			AlternativesCount:                util.Ptr(uint(0)),
-			TotalSequencesCountMax:           util.Ptr(uint(0)),
-			SupportsReselection:              util.Ptr(false),
-		},
-	}
-	resultErr = api.ErrNoCompatibleEntity
-	if !e.IsCompatibleEntityType(entity) {
-		return
+	if data.Alternatives[0].PowerSequence[0].PowerTimeSlot[0].ValueList == nil ||
+		len(data.Alternatives[0].PowerSequence[0].PowerTimeSlot[0].ValueList.Value) == 0 ||
+		data.Alternatives[0].PowerSequence[0].PowerTimeSlot[0].ValueList.Value[0].Value == nil ||
+		data.Alternatives[0].PowerSequence[0].PowerTimeSlot[0].ValueList.Value[0].ValueType == nil {
+		return 0, 0, api.ErrDataNotAvailable
 	}
 
-	resultErr = api.ErrDataNotAvailable
-	smartEnergyManagement, err := client.NewSmartEnergyManagementPs(e.LocalEntity, entity)
-	if err != nil || smartEnergyManagement == nil {
-		return
+	valueType := *data.Alternatives[0].PowerSequence[0].PowerTimeSlot[0].ValueList.Value[0].ValueType
+	value := (*data.Alternatives[0].PowerSequence[0].PowerTimeSlot[0].ValueList.Value[0].Value).GetValue()
+
+	switch valueType {
+	case model.PowerTimeSlotValueTypeTypePower:
+		power = value
+	case model.PowerTimeSlotValueTypeTypePowerMax:
+		maxPower = value
+	default:
+		return 0, 0, api.ErrDataNotAvailable
 	}
 
-	smartEnergyManagementDataPtr, err := smartEnergyManagement.GetData()
-	if err != nil || smartEnergyManagementDataPtr == nil {
-		return
-	}
-	smartEnergyManagementData = *smartEnergyManagementDataPtr
-	resultErr = nil
-
-	return smartEnergyManagementData, resultErr
+	return power, maxPower, nil
 }
 
-// Scenario 2 - Control heat pump compressor's power consumption flexibility
-
-// Write the Smart Energy Management Data
-//
-// parameters:
-//   - entity: the entity of the heatpump compressor
-//   - value: the new limit in W
-func (e *OHPCF) WriteSmartEnergyManagementData(entity spineapi.EntityRemoteInterface,
-	data *model.SmartEnergyManagementPsDataType) (*model.MsgCounterType, error) {
-
+func (e *OHPCF) PowerConsumptionFlexibilitySettings(
+	entity spineapi.EntityRemoteInterface,
+) (*ucapi.PowerConsumptionFlexibilitySettings, error) {
 	if !e.IsCompatibleEntityType(entity) {
 		return nil, api.ErrNoCompatibleEntity
 	}
@@ -73,10 +52,258 @@ func (e *OHPCF) WriteSmartEnergyManagementData(entity spineapi.EntityRemoteInter
 		return nil, api.ErrDataNotAvailable
 	}
 
-	msgCounter, err := smartEnergyManagement.WriteData(data)
+	data, err := smartEnergyManagement.GetData()
 	if err != nil {
 		return nil, err
 	}
 
-	return msgCounter, nil
+	if data == nil ||
+		len(data.Alternatives) == 0 ||
+		len(data.Alternatives[0].PowerSequence) == 0 ||
+		data.Alternatives[0].PowerSequence[0].Description.SequenceId == nil ||
+		data.Alternatives[0].PowerSequence[0].State == nil ||
+		data.Alternatives[0].PowerSequence[0].State.State == nil {
+		return nil, api.ErrDataNotAvailable
+	}
+
+	isAvaialable := false
+	if data.Alternatives[0].PowerSequence[0].State.State != nil {
+		isAvaialable = (*data.Alternatives[0].PowerSequence[0].State.State == model.PowerSequenceStateTypeInactive)
+	}
+
+	operatingConstraintsInterrupt := data.Alternatives[0].PowerSequence[0].OperatingConstraintsInterrupt
+	isStoppable := (operatingConstraintsInterrupt.IsStoppable != nil && *operatingConstraintsInterrupt.IsStoppable)
+	isPausable := (operatingConstraintsInterrupt.IsPausable != nil && *operatingConstraintsInterrupt.IsPausable)
+	if !isStoppable && !isPausable {
+		logging.Log().Error("Power sequence is neither stoppable nor pausable")
+		return nil, api.ErrDataNotAvailable
+	}
+
+	earliestStartTime := time.Now()
+	latestEndTime := time.Now()
+	// if data.Alternatives[0].PowerSequence[0].ScheduleConstraints == nil {
+	// } else {
+	// 	earliestStartTime, err = data.Alternatives[0].PowerSequence[0].ScheduleConstraints.EarliestStartTime.GetTime()
+	// 	if err != nil {
+	// 		logging.Log().Error("Earliest start time is missing")
+	// 		return nil, err
+	// 	}
+
+	// 	latestEndTime, err = data.Alternatives[0].PowerSequence[0].ScheduleConstraints.LatestEndTime.GetTime()
+	// 	if err != nil {
+	// 		logging.Log().Error("Latest end time is missing")
+	// 		return nil, err
+	// 	}
+	// }
+
+	// If Element "schedule" is absent, this denotes that this
+	// sequence will not be started autonomously by the server.
+	canStartAutonomously := data.Alternatives[0].PowerSequence[0].Schedule != nil
+
+	power, maxPower, err := getPowerValues(data)
+	if err != nil || (power == 0 && maxPower == 0) {
+		logging.Log().Error("Both power and max power are missing")
+		return nil, err
+	}
+
+	settings := &ucapi.PowerConsumptionFlexibilitySettings{
+		Power:                power,
+		MaxPower:             maxPower,
+		IsAvailable:          isAvaialable,
+		IsStoppable:          isStoppable,
+		IsPauseable:          isPausable,
+		CanStartAutonomously: canStartAutonomously,
+		EarliestStartTime:    earliestStartTime,
+		LatestEndTime:        latestEndTime,
+	}
+
+	return settings, nil
+}
+
+func (e *OHPCF) State(entity spineapi.EntityRemoteInterface) (*ucapi.PowerSequenceStateType, error) {
+	if !e.IsCompatibleEntityType(entity) {
+		return nil, api.ErrNoCompatibleEntity
+	}
+
+	smartEnergyManagement, err := client.NewSmartEnergyManagementPs(e.LocalEntity, entity)
+	if err != nil || smartEnergyManagement == nil {
+		return nil, api.ErrDataNotAvailable
+	}
+
+	data, err := smartEnergyManagement.GetData()
+	if err != nil {
+		return nil, err
+	}
+
+	if data == nil ||
+		len(data.Alternatives) == 0 ||
+		len(data.Alternatives[0].PowerSequence) == 0 ||
+		data.Alternatives[0].PowerSequence[0].State == nil ||
+		data.Alternatives[0].PowerSequence[0].State.State == nil {
+		return nil, api.ErrDataNotAvailable
+	}
+
+	state := ucapi.PowerSequenceStateType(*data.Alternatives[0].PowerSequence[0].State.State)
+
+	return &state, nil
+}
+
+// StartTime retrieves the start time of the power consumption for the given entity.
+func (e *OHPCF) StartTime(entity spineapi.EntityRemoteInterface) (*time.Time, error) {
+	if !e.IsCompatibleEntityType(entity) {
+		return nil, api.ErrNoCompatibleEntity
+	}
+
+	smartEnergyManagement, err := client.NewSmartEnergyManagementPs(e.LocalEntity, entity)
+	if err != nil || smartEnergyManagement == nil {
+		return nil, api.ErrDataNotAvailable
+	}
+
+	data, err := smartEnergyManagement.GetData()
+	if err != nil {
+		return nil, err
+	}
+
+	smartEnergyManagementPsData := model.SmartEnergyManagementPsDataType{}
+	util.DeepCopy[*model.SmartEnergyManagementPsDataType](data, &smartEnergyManagementPsData)
+	sequance := &smartEnergyManagementPsData.Alternatives[0].PowerSequence[0]
+
+	if sequance.Schedule == nil || sequance.Schedule.StartTime == nil {
+		return nil, api.ErrDataNotAvailable
+	}
+
+	startTime, err := sequance.Schedule.StartTime.GetTime()
+	if err != nil {
+		return nil, err
+	}
+
+	return &startTime, nil
+}
+
+// Scenario 2 - Control heat pump compressor's power consumption flexibility
+
+func (e *OHPCF) WriteStartTime(entity spineapi.EntityRemoteInterface, startTime time.Time) error {
+	if !e.IsCompatibleEntityType(entity) {
+		return api.ErrNoCompatibleEntity
+	}
+
+	smartEnergyManagement, err := client.NewSmartEnergyManagementPs(e.LocalEntity, entity)
+	if err != nil || smartEnergyManagement == nil {
+		return api.ErrDataNotAvailable
+	}
+
+	data, err := smartEnergyManagement.GetData()
+	if err != nil {
+		return err
+	}
+
+	if startTime.Compare(time.Now()) < 0 {
+		logging.Log().Error("Start time is in the past")
+		return api.ErrNotSupported
+	}
+
+	smartEnergyManagementPsData := model.SmartEnergyManagementPsDataType{}
+	util.DeepCopy(data, &smartEnergyManagementPsData)
+	sequance := &smartEnergyManagementPsData.Alternatives[0].PowerSequence[0]
+	sequance.Schedule = &model.PowerSequenceScheduleDataType{
+		StartTime: model.NewAbsoluteOrRelativeTimeTypeFromDuration(time.Until(startTime)),
+	}
+
+	_, err = smartEnergyManagement.WriteData(&smartEnergyManagementPsData)
+
+	return err
+}
+
+func (e *OHPCF) writeState(entity spineapi.EntityRemoteInterface, state model.PowerSequenceStateType) error {
+	if !e.IsCompatibleEntityType(entity) {
+		return api.ErrNoCompatibleEntity
+	}
+
+	smartEnergyManagement, err := client.NewSmartEnergyManagementPs(e.LocalEntity, entity)
+	if err != nil || smartEnergyManagement == nil {
+		return api.ErrDataNotAvailable
+	}
+
+	data, err := smartEnergyManagement.GetData()
+	if err != nil {
+		return err
+	}
+
+	smartEnergyManagementPsData := model.SmartEnergyManagementPsDataType{}
+	util.DeepCopy(data, &smartEnergyManagementPsData)
+	sequance := &smartEnergyManagementPsData.Alternatives[0].PowerSequence[0]
+	sequance.State.State = util.Ptr(state)
+
+	_, err = smartEnergyManagement.WriteData(&smartEnergyManagementPsData)
+
+	return err
+}
+
+func (e *OHPCF) Start(entity spineapi.EntityRemoteInterface) error {
+	flexibilitySettings, _ := e.PowerConsumptionFlexibilitySettings(entity)
+	currentState, _ := e.State(entity)
+
+	if flexibilitySettings == nil || currentState == nil {
+		return api.ErrDataNotAvailable
+	}
+
+	switch *currentState {
+	case ucapi.PowerSequenceStateTypeInactive:
+		// Schedule (activate) optional power consumption process to begin within 5 seconds
+		return e.WriteStartTime(entity, time.Now().Add(time.Second*5))
+
+	case ucapi.PowerSequenceStateTypeRunning:
+		// Already running
+		return nil
+
+	case ucapi.PowerSequenceStateTypePaused:
+		if flexibilitySettings.IsPauseable {
+			// Resume the process
+			return e.writeState(entity, model.PowerSequenceStateTypeRunning)
+		}
+	}
+
+	return api.ErrNotSupported
+}
+
+func (e *OHPCF) Stop(entity spineapi.EntityRemoteInterface) error {
+	flexibilitySettings, _ := e.PowerConsumptionFlexibilitySettings(entity)
+	currentState, _ := e.State(entity)
+
+	if flexibilitySettings == nil || currentState == nil {
+		return api.ErrDataNotAvailable
+	}
+
+	if !flexibilitySettings.IsStoppable {
+		logging.Log().Error("Power sequence is not stoppable")
+		return api.ErrNotSupported
+	}
+
+	if *currentState != ucapi.PowerSequenceStateTypeRunning {
+		logging.Log().Error("Power sequence is not running. Nothing to stop")
+		return api.ErrNotSupported
+	}
+
+	return e.writeState(entity, model.PowerSequenceStateTypeInvalid)
+}
+
+func (e *OHPCF) Pause(entity spineapi.EntityRemoteInterface) error {
+	flexibilitySettings, _ := e.PowerConsumptionFlexibilitySettings(entity)
+	currentState, _ := e.State(entity)
+
+	if flexibilitySettings == nil || currentState == nil {
+		return api.ErrDataNotAvailable
+	}
+
+	if !flexibilitySettings.IsPauseable {
+		logging.Log().Error("Power sequence is not pausable")
+		return api.ErrNotSupported
+	}
+
+	if *currentState != ucapi.PowerSequenceStateTypeRunning {
+		logging.Log().Error("Power sequence is not running. Nothing to pause")
+		return api.ErrNotSupported
+	}
+
+	return e.writeState(entity, model.PowerSequenceStateTypePaused)
 }

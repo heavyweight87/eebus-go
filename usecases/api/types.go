@@ -35,6 +35,19 @@ const (
 	HvacOverrunStatusTypeInactive HvacOverrunStatusType = "inactive"
 )
 
+type PowerSequenceStateType string
+
+const (
+	PowerSequenceStateTypeRunning         PowerSequenceStateType = "running"
+	PowerSequenceStateTypePaused          PowerSequenceStateType = "paused"
+	PowerSequenceStateTypeScheduled       PowerSequenceStateType = "scheduled"
+	PowerSequenceStateTypeScheduledPaused PowerSequenceStateType = "scheduledPaused"
+	PowerSequenceStateTypePending         PowerSequenceStateType = "pending"
+	PowerSequenceStateTypeInactive        PowerSequenceStateType = "inactive"
+	PowerSequenceStateTypeCompleted       PowerSequenceStateType = "completed"
+	PowerSequenceStateTypeInvalid         PowerSequenceStateType = "invalid"
+)
+
 // manufacturer data type
 type ManufacturerData struct {
 	DeviceName                     string
@@ -230,4 +243,30 @@ type SetpointConstraints struct {
 
 	// Minimum step size between two different values, 0 if not set.
 	StepSize float64
+}
+
+type PowerConsumptionFlexibilitySettings struct {
+	// The power consumption in watts.
+	Power float64
+
+	// The maximum power consumption in watts.
+	MaxPower float64
+
+	// Indicates the availability of an optional consumption of power
+	IsAvailable bool
+
+	// Indicates whether the consumption may be stopped by the client.
+	IsStoppable bool
+
+	// Indicates whether the consumption may be paused and resumed by the client.
+	IsPauseable bool
+
+	// Indicates if the consumption will not be started autonomously by the compressor.
+	CanStartAutonomously bool
+
+	// The earliest time the power consumption can be started.
+	EarliestStartTime time.Time
+
+	// The latest time the power consumption can be ended.
+	LatestEndTime time.Time
 }
