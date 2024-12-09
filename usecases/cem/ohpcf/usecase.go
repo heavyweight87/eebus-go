@@ -12,6 +12,8 @@ import (
 // Optimization of Heat Pump Compressor Function
 type OHPCF struct {
 	*usecase.UseCaseBase
+
+	optionalPowerConsumptionState *model.PowerSequenceStateType
 }
 
 var _ ucapi.CemOHPCFInterface = (*OHPCF)(nil)
@@ -21,11 +23,9 @@ func NewOHPCF(
 	eventCB api.EntityEventCallback,
 ) *OHPCF {
 	validActorTypes := []model.UseCaseActorType{
-		model.UseCaseActorTypeCEM,
 		model.UseCaseActorTypeCompressor,
 	}
 	validEntityTypes := []model.EntityTypeType{
-		model.EntityTypeTypeCEM,
 		model.EntityTypeTypeCompressor,
 	}
 	useCaseScenarios := []api.UseCaseScenario{
