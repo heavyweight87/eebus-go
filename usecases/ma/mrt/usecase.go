@@ -17,7 +17,7 @@ type MRT struct {
 var _ ucapi.MaMRTInterface = (*MRT)(nil)
 
 // Create a new Monitoring of DHW System Function Use Case
-func NewMRHSF(
+func NewMRT(
 	localEntity spineapi.EntityLocalInterface,
 	eventCB api.EntityEventCallback,
 ) *MRT {
@@ -25,7 +25,7 @@ func NewMRHSF(
 		model.UseCaseActorTypeHVACRoom,
 	}
 	validEntityTypes := []model.EntityTypeType{
-		model.EntityTypeTypeHvacRoom,
+		model.EntityTypeTypeTemperatureSensor,
 	}
 	useCaseScenarios := []api.UseCaseScenario{
 		{

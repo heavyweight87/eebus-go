@@ -27,7 +27,7 @@ func (e *MRT) HandleEvent(payload spineapi.EventPayload) {
 
 	switch payload.Data.(type) {
 	case *model.MeasurementDescriptionListDataType:
-		e.deviceMeasurementDescriptionDataUpdate(payload.Entity)
+		e.deviceMeasurementDescriptionDataUpdate(payload)
 
 	case *model.MeasurementListDataType:
 		e.deviceMeasurementDataUpdate(payload)
@@ -44,6 +44,9 @@ func (e *MRT) deviceConnected(entity spineapi.EntityRemoteInterface) {
 		}
 
 		// Get measurement parameters
+		// filter := &model.MeasurementDescriptionListDataSelectorsType{
+		// 	ScopeType: util.Ptr(model.ScopeTypeTypeRoomAirTemperature),
+		// }
 		if _, err := measurement.RequestDescriptions(nil, nil); err != nil {
 			logging.Log().Error(err)
 		}
@@ -51,12 +54,23 @@ func (e *MRT) deviceConnected(entity spineapi.EntityRemoteInterface) {
 		if _, err := measurement.RequestConstraints(nil, nil); err != nil {
 			logging.Log().Error(err)
 		}
+	} else {
+		logging.Log().Error(err)
 	}
 }
 
 // The measurement description data of a device was updated
-func (e *MRT) deviceMeasurementDescriptionDataUpdate(entity spineapi.EntityRemoteInterface) {
-	if measurement, err := client.NewMeasurement(e.LocalEntity, entity); err == nil {
+func (e *MRT) deviceMeasurementDescriptionDataUpdate(payload spineapi.EventPayload) {
+	data := payload.Data.(*model.MeasurementDescriptionListDataType)
+	if measurement, err := client.NewMeasurement(e.LocalEntity, payload.Entity); err == nil {
+		// measurement descriptions received, now get the data
+		filter := model.MeasurementDescriptionDataType{
+			ScopeType: util.Ptr(model.ScopeTypeTypeRoomAirTemperature),
+		}
+		if measurement.CheckEventPayloadDataForFilter(data, filter) && e.EventCB != nil {
+			e.EventCB(payload.Ski, payload.Device, payload.Entity, DataUpdateRoomTemperature)
+		}
+
 		// measurement descriptions received, now get the data
 		if _, err := measurement.RequestData(nil, nil); err != nil {
 			logging.Log().Error("Error getting measurement list values:", err)
@@ -66,12 +80,13 @@ func (e *MRT) deviceMeasurementDescriptionDataUpdate(entity spineapi.EntityRemot
 
 // The measurement data of a device was updated
 func (e *MRT) deviceMeasurementDataUpdate(payload spineapi.EventPayload) {
+	data := payload.Data.(*model.MeasurementListDataType)
 	if measurement, err := client.NewMeasurement(e.LocalEntity, payload.Entity); err == nil {
 		// Scenario 1
 		filter := model.MeasurementDescriptionDataType{
 			ScopeType: util.Ptr(model.ScopeTypeTypeRoomAirTemperature),
 		}
-		if measurement.CheckEventPayloadDataForFilter(payload.Data, filter) && e.EventCB != nil {
+		if measurement.CheckEventPayloadDataForFilter(data, filter) && e.EventCB != nil {
 			e.EventCB(payload.Ski, payload.Device, payload.Entity, DataUpdateRoomTemperature)
 		}
 	}
