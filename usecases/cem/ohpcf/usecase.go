@@ -12,20 +12,21 @@ import (
 // Optimization of Heat Pump Compressor Function
 type OHPCF struct {
 	*usecase.UseCaseBase
+
+	optionalPowerConsumptionState *model.PowerSequenceStateType
 }
 
 var _ ucapi.CemOHPCFInterface = (*OHPCF)(nil)
 
+// NewOHPCF creates a new Optimization of Heat Pump Compressor Function use case
 func NewOHPCF(
 	localEntity spineapi.EntityLocalInterface,
 	eventCB api.EntityEventCallback,
 ) *OHPCF {
 	validActorTypes := []model.UseCaseActorType{
-		model.UseCaseActorTypeCEM,
 		model.UseCaseActorTypeCompressor,
 	}
 	validEntityTypes := []model.EntityTypeType{
-		model.EntityTypeTypeCEM,
 		model.EntityTypeTypeCompressor,
 	}
 	useCaseScenarios := []api.UseCaseScenario{
@@ -64,10 +65,8 @@ func NewOHPCF(
 }
 
 func (e *OHPCF) AddFeatures() {
-	// client features
-	var clientFeatures = []model.FeatureTypeType{
-		model.FeatureTypeTypeSmartEnergyManagementPs,
-	}
+	var clientFeatures = []model.FeatureTypeType{}
+
 	for _, feature := range clientFeatures {
 		_ = e.LocalEntity.GetOrAddFeature(feature, model.RoleTypeClient)
 	}
