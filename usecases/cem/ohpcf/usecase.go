@@ -31,14 +31,18 @@ func NewOHPCF(
 	}
 	useCaseScenarios := []api.UseCaseScenario{
 		{
-			Scenario:       model.UseCaseScenarioSupportType(1),
-			Mandatory:      true,
-			ServerFeatures: []model.FeatureTypeType{model.FeatureTypeTypeSmartEnergyManagementPs},
+			Scenario:  model.UseCaseScenarioSupportType(1),
+			Mandatory: true,
+			ServerFeatures: []model.FeatureTypeType{
+				model.FeatureTypeTypeSmartEnergyManagementPs,
+			},
 		},
 		{
-			Scenario:       model.UseCaseScenarioSupportType(2),
-			Mandatory:      true,
-			ServerFeatures: []model.FeatureTypeType{model.FeatureTypeTypeSmartEnergyManagementPs},
+			Scenario:  model.UseCaseScenarioSupportType(2),
+			Mandatory: true,
+			ServerFeatures: []model.FeatureTypeType{
+				model.FeatureTypeTypeSmartEnergyManagementPs,
+			},
 		},
 	}
 
@@ -65,7 +69,9 @@ func NewOHPCF(
 }
 
 func (e *OHPCF) AddFeatures() {
-	var clientFeatures = []model.FeatureTypeType{}
+	var clientFeatures = []model.FeatureTypeType{
+		model.FeatureTypeTypeSmartEnergyManagementPs,
+	}
 
 	for _, feature := range clientFeatures {
 		_ = e.LocalEntity.GetOrAddFeature(feature, model.RoleTypeClient)
