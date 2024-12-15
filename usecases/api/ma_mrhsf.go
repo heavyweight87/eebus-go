@@ -6,7 +6,7 @@ import (
 )
 
 // Actor: Monitoring Appliance
-// UseCase: Monitoring of Power Consumption
+// UseCase: Monitoring of Room Heating System Function
 type MaMRHSFInterface interface {
 	api.UseCaseInterface
 

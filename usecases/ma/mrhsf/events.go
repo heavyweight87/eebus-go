@@ -9,7 +9,7 @@ import (
 	"github.com/enbility/spine-go/model"
 )
 
-// HandleEvent handles events for the CRCSF use case
+// HandleEvent handles events for the MRHSF use case
 func (e *MRHSF) HandleEvent(payload spineapi.EventPayload) {
 	if !e.IsCompatibleEntityType(payload.Entity) {
 		return

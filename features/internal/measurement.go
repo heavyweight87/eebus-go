@@ -110,7 +110,7 @@ func (m *MeasurementCommon) GetConstraintsForFilter(
 	return result, nil
 }
 
-// Get the measuement data for a given measurementId
+// Get the measurements data for a given measurementId
 //
 // Will return nil if no data is available
 func (m *MeasurementCommon) GetDataForId(measurementId model.MeasurementIdType) (
@@ -123,7 +123,7 @@ func (m *MeasurementCommon) GetDataForId(measurementId model.MeasurementIdType) 
 	return &result[0], nil
 }
 
-// Get measuement data for a given filter
+// Get measurements data for a given filter
 //
 // Will return nil if no data is available
 func (m *MeasurementCommon) GetDataForFilter(filter model.MeasurementDescriptionDataType) (

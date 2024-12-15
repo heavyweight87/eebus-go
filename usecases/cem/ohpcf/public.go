@@ -7,9 +7,9 @@ import (
 	"github.com/enbility/eebus-go/features/client"
 	ucapi "github.com/enbility/eebus-go/usecases/api"
 	"github.com/enbility/ship-go/logging"
+	"github.com/enbility/ship-go/util"
 	spineapi "github.com/enbility/spine-go/api"
 	"github.com/enbility/spine-go/model"
-	"github.com/enbility/spine-go/util"
 )
 
 // Returns copy of the SmartEnergyManagementPsDataType data for the given entity.
